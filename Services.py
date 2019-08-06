@@ -47,7 +47,14 @@ def draw_path(route, short_route, goal, tact, status, auto_rotate=False):
 
 
 def status_update(number, dubs):
-    print("Step 2 of 2 (Shortening path...): [" + "#" * int(round(number * (200 / dubs))) + "] ",
+
+    progress_number = round(number * (200 / dubs))
+    progress_number_100er = 2 * (progress_number // 100)
+    progress_number_remain = progress_number % 100
+
+    progress_string = "#" + str(progress_number_100er * 100) + "#" * progress_number_remain
+
+    print("Step 2 of 2 (Shortening path...): [" + progress_string + "] ",
           str(number) + " deviations eliminated")
 
     return time.time()
