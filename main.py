@@ -6,7 +6,7 @@ import time
 
 # Config (Global)
 
-maxX = 10
+maxX = 1000
 maxY = maxX
 maxZ = maxX
 
