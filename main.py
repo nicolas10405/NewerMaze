@@ -6,7 +6,7 @@ import time
 
 # Config (Global)
 
-maxX = 100
+maxX = 10
 maxY = maxX
 maxZ = maxX
 
@@ -20,7 +20,7 @@ starting_position = [25, 75, 25]
 goal_position = [75, 25, 75]
 
 abs_reward = round(maxX * maxY * maxZ) / 1000  # AI
-reactivate_after = 10  # tacts #AI
+reactivate_after = 100  # tacts #AI
 
 route = [starting_position]
 short_route = []
