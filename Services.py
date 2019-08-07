@@ -3,6 +3,18 @@ import mpl_toolkits.mplot3d.axes3d
 import time
 
 
+def generate_id(version, string="_", *args):
+
+    unique_id = ""
+
+    for num in args:
+        unique_id += str(num)
+
+    file_id = "S_Matrix_" + str(unique_id) + string + version
+
+    return file_id
+
+
 def convert_route(route):
     route_x = []
     route_y = []
@@ -14,6 +26,20 @@ def convert_route(route):
         route_z += [route[i][2]]
 
     return route_x, route_y, route_z
+
+
+def step_direction(step1, step2):
+
+    if step2[0] - step1[0] == 1: direction = [0,0]
+    if step2[0] - step1[0] == -1: direction = [0,1]
+
+    if step2[1] - step1[1] == 1: direction = [1,0]
+    if step2[1] - step1[1] == -1: direction = [1,1]
+
+    if step2[2] - step1[2] == 1: direction = [2,0]
+    if step2[2] - step1[2] == -1: direction = [2,1]
+
+    return direction
 
 
 def draw_path(route, short_route, goal, tact, status, auto_rotate=False):
@@ -67,8 +93,8 @@ def clean_up_route(long_route):
     status_counter = 1
     continue_to_check = True
 
-    number_of_duplicates = 500  # len([x for n, x in enumerate(long_route) if x in long_route[:n]])
-    print("\nStarting path optimization: " + str(number_of_duplicates) + " deviations found")
+    number_of_duplicates_assumed = 500  # len([x for n, x in enumerate(long_route) if x in long_route[:n]])
+    print("\nStarting path optimization: ")
 
     initial_length = len(long_route)
 
@@ -101,7 +127,7 @@ def clean_up_route(long_route):
                 status_counter = status_counter + 1
 
                 if time.time() - last_execution_time > 0.5:
-                    last_execution_time = status_update(status_counter, number_of_duplicates)
+                    last_execution_time = status_update(status_counter, number_of_duplicates_assumed)
 
                 break
 
@@ -177,8 +203,3 @@ def clean_up_route(long_route):
 
 '''
 
-'''
-                print(str(time.time() - last_execution_time))
-                if i % 10 == 0: last_execution_time = status_update(status_counter, number_of_duplicates)
-                if i % 10 == 0: 
-'''

@@ -6,34 +6,38 @@ import time
 
 # Config (Global)
 
-maxX = 1000
+maxX = 10
 maxY = maxX
 maxZ = maxX
 
-speed_optimized = True
-always_shorten_route = True
-auto_rotate = True
+debugging_view = True
+always_shorten_route = False
+auto_rotate = False
 
 # Config (Round)
 
-starting_position = [25, 75, 25]
-goal_position = [75, 25, 75]
+version_for_files = "v01"
 
-abs_reward = round(maxX * maxY * maxZ) / 1000  # AI
-reactivate_after = 100  # tacts #AI
+starting_position = [3, 3, 3]
+goal_position = [5, 5, 5]
+
+abs_reward = 10000 # round(maxX * maxY * maxZ) / 1000  # AI
+reactivate_after = 1  # tacts #AI
 
 route = [starting_position]
 short_route = []
 tact = 1
+status = "NULL"
 
 tact_last_update = 0
 time_last_update = time.time()
 
-# max_tact_allowed = 200
-max_tact_allowed = round(1 * maxX * maxY * maxZ)  # AI
+max_tact_allowed = 1
+# max_tact_allowed = round(0.5 * maxX * maxY * maxZ)  # AI
 
 
 # Services
+
 
 def set_borders():  # TBD, ob + 1 oder +2
 
@@ -58,6 +62,54 @@ def get_cg_matrix(x, y, z):
     ]
 
     return cg_matrix
+
+
+def update_strength(total_strength, tacts, route):
+
+    extra_strength = round(total_strength / tacts)
+
+    print("Extra: " + str(extra_strength))
+    print("routenlänge: " + str(len(route)-1))
+
+    i = 0
+
+    direction = [0, 0] # Services.step_direction(route[i], route[i + 1])
+
+    # strength[route[i][0]][route[i][1]][route[i][2]][direction[0]][direction[1]] = extra_strength
+
+    print(strength[0][0][0][direction[0]][direction[1]])
+    strength[0][0][0][0][0] = 888
+
+    # strength[0][0][0][direction[0]][direction[1]] = 888
+
+    print(strength)
+
+    print("Strength updated")
+
+'''
+
+    for i in range(len(route)-1):
+
+        direction = Services.step_direction(route[i], route[i + 1])
+
+        print("Runde " + str(i))
+        print(str(direction))
+        print("\n\n")
+        print("Schwarz:")
+
+
+        strength[route[i][0]][route[i][1]][route[i][2]][direction[0]][direction[1]] = extra_strength
+        print("Neuer Wert:" + str(strength[route[i][0]][route[i][1]][route[i][2]][direction[0]][direction[1]]))
+
+        print(str(route[i]) + " did go " + str(direction))
+
+        print(str(strength[route[i][0]][route[i][1]][route[i][2]][direction[0]][direction[1]]))
+'''
+
+
+
+
+
 
 
 def test_print(tact_adjuster=0):
@@ -93,24 +145,6 @@ def status_update(percent):
           str(percent) + "% of max, now tact: " + str(tact) + ") - Speed: " + str(tps) + " TPS - max runtime: " + str(rt_min) + " min " + str(rt_sec) + "s")
     time_last_update = time.time()
     tact_last_update = tact
-
-
-# Initalisierung
-
-canGo = Setup_Maze.setupDefaultMaze(maxX + 1, maxY + 1, maxZ + 1,
-                                    defaultValue=True)  # max +1 to give room for 3 boundary planes set to false
-defaultValue = 100  # Starting value of individual strengths
-strength = Setup_Maze.setupDefaultMaze(maxX, maxY, maxZ,
-                                       defaultValue=[[defaultValue, defaultValue], [defaultValue, defaultValue],
-                                                     [defaultValue, defaultValue]])
-
-current_position = starting_position
-
-set_borders()
-
-status = "Initialized round"
-print(status)
-
 
 # Tact
 
@@ -161,7 +195,7 @@ def make_a_move(current_position):
 
         route.append(new_Position)
 
-        if not speed_optimized:
+        if debugging_view:
             test_print()
     else:
         new_Position = []
@@ -169,12 +203,34 @@ def make_a_move(current_position):
     return new_Position
 
 
+# Initalisierung
+
+id = Services.generate_id(version_for_files, "_", maxX, maxY, maxZ, starting_position, goal_position)
+
+canGo = Setup_Maze.setupDefaultMaze(maxX + 1, maxY + 1, maxZ + 1,
+                                       defaultValue=True)  # max +1 to give room for 3 boundary planes set to false
+defaultValue = 100  # Starting value of individual strengths
+strength = Setup_Maze.setupDefaultMaze(maxX, maxY, maxZ,
+                                       defaultValue=[[defaultValue, defaultValue], [defaultValue, defaultValue],
+                                                     [defaultValue, defaultValue]])
+
+current_position = starting_position
+
+set_borders()
+
+status = "\nInitialized round"
+
+#strength[2][3][4][0][0] = 999
+
+print(status + "\nID: " + id + "\n")
+
 print("Searching goal... \n (Max: " + str(max_tact_allowed) + " tacts)")
+
 status = "Running"
 
 start_time = time.time()
 
-div_for_status = round(max_tact_allowed / 50)
+div_for_status = 100 #round(max_tact_allowed / 50) CHANGE BACK
 
 while tact <= max_tact_allowed:
 
@@ -188,7 +244,9 @@ while tact <= max_tact_allowed:
     if current_position == goal_position:
         status = "Goal found"
         print(status)
-        # Cleanup route
+        long_route = route.copy()
+        short_route = Services.clean_up_route(long_route)
+        update_strength(abs_reward, tact, short_route)
         break
 
     status = "Maximum tact count Reached"
@@ -196,9 +254,10 @@ while tact <= max_tact_allowed:
     tact += 1
 
     if tact % div_for_status == 0 or tact % 25000 == 0:
-        status_update((round((tact / max_tact_allowed) * 100)))
+        status_update((round((tact / 10**5) * 100)))
+        # status_update((round((tact / max_tact_allowed + 10) * 100))) CHANGE BACK
 
-if status == "Goal found" or always_shorten_route:
+if status != "Goal found" and always_shorten_route:
     long_route = route.copy()
     short_route = Services.clean_up_route(long_route)
 
@@ -214,6 +273,7 @@ test_print(-1)
 
 # scratch
 
+update_strength(abs_reward, tact, route)  # REMOVE AFTER TESTING
 
 # Final (always shown) statistics
 print("Runtime: ", round(ms), "ms  // ", tps, "tacts per second")
