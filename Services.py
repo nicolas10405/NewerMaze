@@ -94,7 +94,7 @@ def clean_up_route(long_route):
     continue_to_check = True
 
     number_of_duplicates_assumed = 500  # len([x for n, x in enumerate(long_route) if x in long_route[:n]])
-    print("\nStarting path optimization: ")
+    print("\n----Starting path optimization:----")
 
     initial_length = len(long_route)
 

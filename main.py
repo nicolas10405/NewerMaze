@@ -1,16 +1,16 @@
 import Setup_Maze
 from numpy.random import choice
-
+import random
 import Services
 import time
 
 # Config (Global)
 
-maxX = 10
+maxX = 25
 maxY = maxX
 maxZ = maxX
 
-debugging_view = True
+debugging_view = False
 always_shorten_route = False
 auto_rotate = False
 
@@ -18,11 +18,11 @@ auto_rotate = False
 
 version_for_files = "v01"
 
-starting_position = [3, 3, 3]
-goal_position = [5, 5, 5]
+starting_position = [10, 10, 10]
+goal_position = [2, 2, 2]
 
-abs_reward = 10000 # round(maxX * maxY * maxZ) / 1000  # AI
-reactivate_after = 1  # tacts #AI
+abs_reward = round(0.15 * maxX * maxY * maxZ) # AI
+reactivate_after = 3  # tacts #AI
 
 route = [starting_position]
 short_route = []
@@ -32,8 +32,8 @@ status = "NULL"
 tact_last_update = 0
 time_last_update = time.time()
 
-max_tact_allowed = 1
-# max_tact_allowed = round(0.5 * maxX * maxY * maxZ)  # AI
+# max_tact_allowed = 10000
+max_tact_allowed = round(2 * maxX * maxY * maxZ)  # AI
 
 
 # Services
@@ -64,7 +64,21 @@ def get_cg_matrix(x, y, z):
     return cg_matrix
 
 
-def update_strength(total_strength, tacts, route):
+def update_strength(total_strength, route):
+
+    extra_strength = round(total_strength / len(route))
+
+    i = 0
+
+    for i in range(len(route)-1):
+
+        direction = Services.step_direction(route[i], route[i + 1])
+        strength[route[i][0]][route[i][1]][route[i][2]][direction[0]][direction[1]] += extra_strength
+
+    print("----Strength updated: +" + str(extra_strength) + " to path----")
+
+''' For Analysis
+
 
     extra_strength = round(total_strength / tacts)
 
@@ -72,21 +86,6 @@ def update_strength(total_strength, tacts, route):
     print("routenlänge: " + str(len(route)-1))
 
     i = 0
-
-    direction = [0, 0] # Services.step_direction(route[i], route[i + 1])
-
-    # strength[route[i][0]][route[i][1]][route[i][2]][direction[0]][direction[1]] = extra_strength
-
-    print(strength[0][0][0][direction[0]][direction[1]])
-    strength[0][0][0][0][0] = 888
-
-    # strength[0][0][0][direction[0]][direction[1]] = 888
-
-    print(strength)
-
-    print("Strength updated")
-
-'''
 
     for i in range(len(route)-1):
 
@@ -98,19 +97,19 @@ def update_strength(total_strength, tacts, route):
         print("Schwarz:")
 
 
-        strength[route[i][0]][route[i][1]][route[i][2]][direction[0]][direction[1]] = extra_strength
+        strength[route[i][0]][route[i][1]][route[i][2]][direction[0]][direction[1]] += extra_strength
         print("Neuer Wert:" + str(strength[route[i][0]][route[i][1]][route[i][2]][direction[0]][direction[1]]))
 
         print(str(route[i]) + " did go " + str(direction))
 
         print(str(strength[route[i][0]][route[i][1]][route[i][2]][direction[0]][direction[1]]))
+
+    print(strength)
+
+    print("Strength updated")
+    
+
 '''
-
-
-
-
-
-
 
 def test_print(tact_adjuster=0):
     print("\n----- Tact", tact + tact_adjuster, "------")
@@ -180,8 +179,8 @@ def make_a_move(current_position):
         z_p_n = z_p / total_e_matrix
         z_m_n = z_m / total_e_matrix
 
-        random_choice = choice(a=(0, 1, 2, 3, 4, 5), \
-                               size=1, \
+        random_choice = choice(a=(0, 1, 2, 3, 4, 5),
+                               size=1,
                                p=(x_p_n, x_m_n, y_p_n, y_m_n, z_p_n, z_m_n))
 
         new_Position = [[x + 1, y, z], [x - 1, y, z], [x, y + 1, z], [x, y - 1, z], [x, y, z + 1], [x, y, z - 1]][
@@ -207,12 +206,9 @@ def make_a_move(current_position):
 
 id = Services.generate_id(version_for_files, "_", maxX, maxY, maxZ, starting_position, goal_position)
 
-canGo = Setup_Maze.setupDefaultMaze(maxX + 1, maxY + 1, maxZ + 1,
-                                       defaultValue=True)  # max +1 to give room for 3 boundary planes set to false
-defaultValue = 100  # Starting value of individual strengths
-strength = Setup_Maze.setupDefaultMaze(maxX, maxY, maxZ,
-                                       defaultValue=[[defaultValue, defaultValue], [defaultValue, defaultValue],
-                                                     [defaultValue, defaultValue]])
+canGo = Setup_Maze.setupDefaultMazeCG(maxX + 1, maxY + 1, maxZ + 1, defaultValue=True)  # max +1 to give room for 3 boundary planes set to false
+
+strength = Setup_Maze.setupDefaultMazeS(maxX, maxY, maxZ, defaultValue=100)
 
 current_position = starting_position
 
@@ -220,17 +216,15 @@ set_borders()
 
 status = "\nInitialized round"
 
-#strength[2][3][4][0][0] = 999
-
 print(status + "\nID: " + id + "\n")
 
-print("Searching goal... \n (Max: " + str(max_tact_allowed) + " tacts)")
+print("----Searching goal---- \n(Max: " + str(max_tact_allowed) + " tacts)")
 
 status = "Running"
 
 start_time = time.time()
 
-div_for_status = 100 #round(max_tact_allowed / 50) CHANGE BACK
+div_for_status = round(max_tact_allowed / 50)
 
 while tact <= max_tact_allowed:
 
@@ -246,7 +240,7 @@ while tact <= max_tact_allowed:
         print(status)
         long_route = route.copy()
         short_route = Services.clean_up_route(long_route)
-        update_strength(abs_reward, tact, short_route)
+        update_strength(abs_reward, short_route)
         break
 
     status = "Maximum tact count Reached"
@@ -254,8 +248,7 @@ while tact <= max_tact_allowed:
     tact += 1
 
     if tact % div_for_status == 0 or tact % 25000 == 0:
-        status_update((round((tact / 10**5) * 100)))
-        # status_update((round((tact / max_tact_allowed + 10) * 100))) CHANGE BACK
+        status_update((round((tact / max_tact_allowed) * 100)))
 
 if status != "Goal found" and always_shorten_route:
     long_route = route.copy()
@@ -272,8 +265,6 @@ else:
 test_print(-1)
 
 # scratch
-
-update_strength(abs_reward, tact, route)  # REMOVE AFTER TESTING
 
 # Final (always shown) statistics
 print("Runtime: ", round(ms), "ms  // ", tps, "tacts per second")
