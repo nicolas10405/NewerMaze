@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
 import mpl_toolkits.mplot3d.axes3d
 import time
+import ast
+import os
 
 
 def generate_id(version, string="_", *args):
@@ -202,4 +204,23 @@ def clean_up_route(long_route):
 
 
 '''
+
+def save_s_matrix(filename, matrix):
+    f = open(str(filename) + ".smx", "wt")
+    f.write(str(matrix))
+    f.close()
+    print("***Matrix saved to file: " + filename)
+
+
+def open_s_matrix(filename, matrix):
+    if os.path.exists(str(filename) + ".smx"):
+        f = open(str(filename) + ".smx", "rt")
+        matrix = f.read()
+        matrix = ast.literal_eval(matrix)
+        f.close()
+        print("\n***Matrix opened from file: " + filename)
+    else:
+        print("\n***No record found for this configuration")
+    return matrix
+
 

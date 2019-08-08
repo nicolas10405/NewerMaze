@@ -3,16 +3,22 @@ from numpy.random import choice
 import random
 import Services
 import time
+import os
+import sys
 
 # Config (Global)
 
-maxX = 25
+maxX = 15
 maxY = maxX
 maxZ = maxX
+
+w_r_strength_matrix = True
 
 debugging_view = False
 always_shorten_route = False
 auto_rotate = False
+
+loop = True
 
 # Config (Round)
 
@@ -21,8 +27,8 @@ version_for_files = "v01"
 starting_position = [10, 10, 10]
 goal_position = [2, 2, 2]
 
-abs_reward = round(0.15 * maxX * maxY * maxZ) # AI
-reactivate_after = 3  # tacts #AI
+abs_reward = 10000 #round(0.25 * maxX * maxY * maxZ) # AI
+reactivate_after = 8  # tacts #AI
 
 route = [starting_position]
 short_route = []
@@ -33,13 +39,13 @@ tact_last_update = 0
 time_last_update = time.time()
 
 # max_tact_allowed = 10000
-max_tact_allowed = round(2 * maxX * maxY * maxZ)  # AI
+max_tact_allowed = round(0.5 * maxX * maxY * maxZ)  # AI
 
 
 # Services
 
 
-def set_borders():  # TBD, ob + 1 oder +2
+def set_borders():
 
     for y_ in range(maxY):
         for z_ in range(maxZ):
@@ -111,6 +117,7 @@ def update_strength(total_strength, route):
 
 '''
 
+
 def test_print(tact_adjuster=0):
     print("\n----- Tact", tact + tact_adjuster, "------")
     if tact_adjuster != 0:
@@ -126,10 +133,10 @@ def test_print(tact_adjuster=0):
     print("New Position:")
     print(new_Position, "(after move in direction " + str(int(random_choice)) + ")")
     if not short_route:
-        print("Long Route:")
-        print(route, "\n")
+        print("Long Route: " + str(len(route)) + " steps")
+        # print(route, "\n")
     else:
-        print("Short Route:")
+        print("Short Route: " + str(len(short_route)) + " steps")
         print(short_route, "\n")
 
 
@@ -145,7 +152,9 @@ def status_update(percent):
     time_last_update = time.time()
     tact_last_update = tact
 
+
 # Tact
+
 
 def make_a_move(current_position):
     global current_s_matrix, current_cg_matrix
@@ -210,6 +219,8 @@ canGo = Setup_Maze.setupDefaultMazeCG(maxX + 1, maxY + 1, maxZ + 1, defaultValue
 
 strength = Setup_Maze.setupDefaultMazeS(maxX, maxY, maxZ, defaultValue=100)
 
+if w_r_strength_matrix: strength = Services.open_s_matrix(id, strength)
+
 current_position = starting_position
 
 set_borders()
@@ -241,6 +252,7 @@ while tact <= max_tact_allowed:
         long_route = route.copy()
         short_route = Services.clean_up_route(long_route)
         update_strength(abs_reward, short_route)
+        if w_r_strength_matrix: Services.save_s_matrix(id, strength)
         break
 
     status = "Maximum tact count Reached"
@@ -269,5 +281,13 @@ test_print(-1)
 # Final (always shown) statistics
 print("Runtime: ", round(ms), "ms  // ", tps, "tacts per second")
 
+#Loop
+
+#if loop: os.execl(sys.executable, os.path.abspath(__file__), *sys.argv)
+#os.system(''python C:\Users\nicolas\newermaze\NewerMaze.py'')
+#python = sys.executable
+#os.execv(python, ['python'] + sys.argv)
+
 # Draw route
 Services.draw_path(route, short_route, goal_position, tact, status, auto_rotate)
+
